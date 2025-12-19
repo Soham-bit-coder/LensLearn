@@ -18,6 +18,9 @@ import RiskAnalysis from "./pages/RiskAnalysis";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import MyRecords from "./pages/MyRecords";
+import Recommendations from "./pages/Recommendations";
+import Resources from "./pages/Resources";
+import UploadNotes from "./pages/UploadNotes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +45,9 @@ const App = () => (
               <Route path="/reports" element={<Reports />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/my-records" element={<MyRecords />} />
+              <Route path="/recommendations" element={<Recommendations />} />
+              <Route path="/resources" element={<Resources />} />
+              <Route path="/upload-notes" element={<UploadNotes />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

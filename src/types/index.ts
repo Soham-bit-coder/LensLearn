@@ -81,3 +81,30 @@ export interface DashboardStats {
   atRiskStudents: number;
   averageAttendance: number;
 }
+
+export interface StudyNote {
+  id: string;
+  title: string;
+  subject: string;
+  description: string;
+  fileName: string;
+  fileUrl: string;
+  uploadedBy: string;
+  uploadedByName: string;
+  uploadedAt: string;
+  classId: string;
+  className: string;
+}
+
+export interface SubjectRecommendation {
+  subject: string;
+  score: number;
+  status: 'weak' | 'average' | 'strong';
+  resources: {
+    title: string;
+    type: 'video' | 'article' | 'practice' | 'book';
+    url: string;
+    description: string;
+  }[];
+  tips: string[];
+}

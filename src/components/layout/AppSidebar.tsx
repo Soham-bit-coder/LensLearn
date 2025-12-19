@@ -10,6 +10,9 @@ import {
   GraduationCap,
   FileSpreadsheet,
   BookOpen,
+  Upload,
+  Lightbulb,
+  FolderOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -28,6 +31,7 @@ const navigation = {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'My Classes', href: '/classes', icon: BookOpen },
     { name: 'Attendance', href: '/attendance', icon: ClipboardCheck },
+    { name: 'Upload Notes', href: '/upload-notes', icon: Upload },
     { name: 'Risk Analysis', href: '/risk-analysis', icon: AlertTriangle },
     { name: 'Reports', href: '/reports', icon: FileSpreadsheet },
   ],
@@ -35,6 +39,8 @@ const navigation = {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Mark Attendance', href: '/mark-attendance', icon: ClipboardCheck },
     { name: 'My Records', href: '/my-records', icon: FileSpreadsheet },
+    { name: 'Recommendations', href: '/recommendations', icon: Lightbulb },
+    { name: 'Resources', href: '/resources', icon: FolderOpen },
   ],
 };
 
