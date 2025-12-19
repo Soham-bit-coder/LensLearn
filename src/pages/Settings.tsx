@@ -67,7 +67,7 @@ export default function Settings() {
                 <Label htmlFor="type">Institution Type</Label>
                 <Select
                   value={formData.type}
-                  onValueChange={(value) => setFormData({ ...formData, type: value })}
+                  onValueChange={(value: 'school' | 'college') => setFormData({ ...formData, type: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
