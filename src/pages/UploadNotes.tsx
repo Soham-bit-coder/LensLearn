@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -30,7 +31,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Upload, FileText, Trash2, Plus, Download, Eye } from 'lucide-react';
+import { Upload, FileText, Trash2, Plus, Download, Eye, BookOpen, Users, TrendingUp, FolderOpen, Clock, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useInstitution } from '@/contexts/InstitutionContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -79,12 +80,13 @@ const subjects = [
 ];
 
 export default function UploadNotes() {
-  const { classes } = useInstitution();
+  const { classes, students } = useInstitution();
   const { user } = useAuth();
   const { toast } = useToast();
   const [notes, setNotes] = useState<StudyNote[]>(mockNotes);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [formData, setFormData] = useState({
     title: '',
     subject: '',
@@ -117,30 +119,45 @@ export default function UploadNotes() {
       return;
     }
 
-    const selectedClass = classes.find((c) => c.id === formData.classId);
-    const newNote: StudyNote = {
-      id: Date.now().toString(),
-      title: formData.title,
-      subject: formData.subject,
-      description: formData.description,
-      fileName: selectedFile.name,
-      fileUrl: URL.createObjectURL(selectedFile),
-      uploadedBy: user?.id || '',
-      uploadedByName: user?.name || '',
-      uploadedAt: new Date().toISOString(),
-      classId: formData.classId,
-      className: selectedClass ? `${selectedClass.name}${selectedClass.division ? `-${selectedClass.division}` : ''}` : '',
-    };
+    // Simulate upload progress
+    setUploadProgress(0);
+    const interval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prev + 20;
+      });
+    }, 200);
 
-    setNotes([newNote, ...notes]);
-    setIsDialogOpen(false);
-    setSelectedFile(null);
-    setFormData({ title: '', subject: '', description: '', classId: '' });
-    
-    toast({
-      title: 'Notes uploaded successfully',
-      description: 'Students can now access these notes',
-    });
+    setTimeout(() => {
+      const selectedClass = classes.find((c) => c.id === formData.classId);
+      const newNote: StudyNote = {
+        id: Date.now().toString(),
+        title: formData.title,
+        subject: formData.subject,
+        description: formData.description,
+        fileName: selectedFile.name,
+        fileUrl: URL.createObjectURL(selectedFile),
+        uploadedBy: user?.id || '',
+        uploadedByName: user?.name || '',
+        uploadedAt: new Date().toISOString(),
+        classId: formData.classId,
+        className: selectedClass ? `${selectedClass.name}${selectedClass.division ? `-${selectedClass.division}` : ''}` : '',
+      };
+
+      setNotes([newNote, ...notes]);
+      setIsDialogOpen(false);
+      setSelectedFile(null);
+      setFormData({ title: '', subject: '', description: '', classId: '' });
+      setUploadProgress(0);
+      
+      toast({
+        title: 'Notes uploaded successfully',
+        description: 'Students can now access these notes',
+      });
+    }, 1200);
   };
 
   const handleDelete = (id: string) => {
@@ -150,6 +167,14 @@ export default function UploadNotes() {
       description: 'The notes have been removed',
     });
   };
+
+  // Calculate stats
+  const totalDownloads = 156; // Mock data
+  const studentsReached = Math.round(students.length * 0.8);
+  const subjectCounts = notes.reduce((acc, note) => {
+    acc[note.subject] = (acc[note.subject] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   return (
     <DashboardLayout>
@@ -248,6 +273,12 @@ export default function UploadNotes() {
                       Selected: {selectedFile.name}
                     </p>
                   )}
+                  {uploadProgress > 0 && uploadProgress < 100 && (
+                    <div className="space-y-2">
+                      <Progress value={uploadProgress} className="h-2" />
+                      <p className="text-xs text-muted-foreground">Uploading... {uploadProgress}%</p>
+                    </div>
+                  )}
                 </div>
               </div>
               <DialogFooter>
@@ -264,36 +295,122 @@ export default function UploadNotes() {
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Total Uploads</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <BookOpen className="h-5 w-5 text-primary" />
+                Total Uploads
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{notes.length}</div>
+              <p className="text-sm text-muted-foreground">study materials</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Subjects Covered</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <FolderOpen className="h-5 w-5 text-primary" />
+                Subjects Covered
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
                 {new Set(notes.map((n) => n.subject)).size}
               </div>
+              <p className="text-sm text-muted-foreground">different subjects</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Classes Served</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Users className="h-5 w-5 text-primary" />
+                Students Reached
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">
-                {new Set(notes.map((n) => n.classId)).size}
-              </div>
+              <div className="text-3xl font-bold">{studentsReached}</div>
+              <p className="text-sm text-muted-foreground">have accessed notes</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Download className="h-5 w-5 text-primary" />
+                Total Downloads
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{totalDownloads}</div>
+              <p className="text-sm text-muted-foreground">across all notes</p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Subject Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Notes by Subject
+            </CardTitle>
+            <CardDescription>Distribution of your uploaded materials</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {Object.entries(subjectCounts).map(([subject, count]) => (
+                <div key={subject} className="p-4 rounded-lg border">
+                  <p className="text-sm text-muted-foreground">{subject}</p>
+                  <p className="text-2xl font-bold">{count}</p>
+                  <Progress value={(count / notes.length) * 100} className="h-2 mt-2" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quick Upload Tips */}
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Tips for Effective Notes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">1</div>
+                <div>
+                  <p className="font-medium">Clear Titles</p>
+                  <p className="text-sm text-muted-foreground">Use descriptive titles that students can easily search</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">2</div>
+                <div>
+                  <p className="font-medium">Detailed Descriptions</p>
+                  <p className="text-sm text-muted-foreground">Include topics covered and key concepts</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">3</div>
+                <div>
+                  <p className="font-medium">Organize by Subject</p>
+                  <p className="text-sm text-muted-foreground">Proper categorization helps students find resources</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">4</div>
+                <div>
+                  <p className="font-medium">Regular Updates</p>
+                  <p className="text-sm text-muted-foreground">Keep materials current with the syllabus</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Notes Table */}
         <Card>
@@ -309,6 +426,10 @@ export default function UploadNotes() {
                 <p className="text-muted-foreground">
                   Click "Upload New Notes" to add study materials
                 </p>
+                <Button className="mt-4" onClick={() => setIsDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Upload Notes
+                </Button>
               </div>
             ) : (
               <Table>
@@ -317,6 +438,7 @@ export default function UploadNotes() {
                     <TableHead>Title</TableHead>
                     <TableHead>Subject</TableHead>
                     <TableHead>Class</TableHead>
+                    <TableHead className="hidden md:table-cell">File</TableHead>
                     <TableHead>Uploaded</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -329,7 +451,7 @@ export default function UploadNotes() {
                           <FileText className="h-4 w-4 text-muted-foreground" />
                           <div>
                             <p className="font-medium">{note.title}</p>
-                            <p className="text-xs text-muted-foreground">{note.fileName}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-1">{note.description}</p>
                           </div>
                         </div>
                       </TableCell>
@@ -337,8 +459,14 @@ export default function UploadNotes() {
                         <Badge variant="outline">{note.subject}</Badge>
                       </TableCell>
                       <TableCell>{note.className}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <span className="text-sm text-muted-foreground">{note.fileName}</span>
+                      </TableCell>
                       <TableCell>
-                        {format(new Date(note.uploadedAt), 'MMM d, yyyy')}
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {format(new Date(note.uploadedAt), 'MMM d, yyyy')}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
