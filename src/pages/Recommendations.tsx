@@ -15,6 +15,11 @@ import {
   Lightbulb,
   Target,
   BookMarked,
+  Clock,
+  Award,
+  Brain,
+  Calendar,
+  CheckCircle,
 } from 'lucide-react';
 import type { SubjectRecommendation } from '@/types';
 
@@ -177,6 +182,18 @@ export default function Recommendations() {
   const averageSubjects = mockRecommendations.filter((r) => r.status === 'average');
   const strongSubjects = mockRecommendations.filter((r) => r.status === 'strong');
 
+  // Calculate overall progress
+  const overallScore = Math.round(mockRecommendations.reduce((acc, r) => acc + r.score, 0) / mockRecommendations.length);
+
+  // Study plan (mock data)
+  const studyPlan = [
+    { day: 'Monday', subject: 'Mathematics', duration: '2 hours', focus: 'Algebra basics' },
+    { day: 'Tuesday', subject: 'Physics', duration: '1.5 hours', focus: 'Mechanics' },
+    { day: 'Wednesday', subject: 'Mathematics', duration: '2 hours', focus: 'Geometry' },
+    { day: 'Thursday', subject: 'Physics', duration: '1.5 hours', focus: 'Thermodynamics' },
+    { day: 'Friday', subject: 'Chemistry', duration: '1 hour', focus: 'Organic reactions' },
+  ];
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -191,7 +208,7 @@ export default function Recommendations() {
         </div>
 
         {/* Overview Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Card className="border-destructive/50 bg-destructive/5">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -230,7 +247,46 @@ export default function Recommendations() {
               <p className="text-sm text-muted-foreground">subjects above 75%</p>
             </CardContent>
           </Card>
+
+          <Card className="border-success/50 bg-success/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Award className="h-5 w-5 text-success" />
+                Overall Score
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-success">{overallScore}%</div>
+              <p className="text-sm text-muted-foreground">average across all subjects</p>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Weekly Study Plan */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Suggested Study Plan
+            </CardTitle>
+            <CardDescription>Recommended weekly schedule for improvement</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {studyPlan.map((plan) => (
+                <div key={plan.day} className="p-4 rounded-lg border">
+                  <p className="font-semibold text-primary">{plan.day}</p>
+                  <p className="text-sm font-medium mt-1">{plan.subject}</p>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
+                    <Clock className="h-3 w-3" />
+                    {plan.duration}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Focus: {plan.focus}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main Content */}
         <div className="grid gap-6 lg:grid-cols-3">
@@ -278,13 +334,18 @@ export default function Recommendations() {
                       </Badge>
                     </CardDescription>
                   </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Target</p>
+                    <p className="text-2xl font-bold text-primary">75%</p>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="resources">
-                  <TabsList className="grid w-full grid-cols-2">
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="resources">Resources</TabsTrigger>
                     <TabsTrigger value="tips">Study Tips</TabsTrigger>
+                    <TabsTrigger value="progress">Progress</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="resources" className="mt-4 space-y-3">
@@ -328,11 +389,81 @@ export default function Recommendations() {
                       </div>
                     ))}
                   </TabsContent>
+
+                  <TabsContent value="progress" className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Current Score</span>
+                        <span className="font-medium">{selectedSubject.score}%</span>
+                      </div>
+                      <Progress value={selectedSubject.score} className="h-3" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Target Score</span>
+                        <span className="font-medium">75%</span>
+                      </div>
+                      <Progress value={75} className="h-3" />
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted">
+                      <p className="font-medium">Improvement Needed</p>
+                      <p className="text-3xl font-bold text-primary">
+                        +{Math.max(0, 75 - selectedSubject.score)}%
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {selectedSubject.score >= 75 
+                          ? 'Great job! You\'ve already reached the target!'
+                          : `Focus on ${selectedSubject.subject} to reach your target score`}
+                      </p>
+                    </div>
+                  </TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
           )}
         </div>
+
+        {/* AI Insights */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              AI-Powered Insights
+            </CardTitle>
+            <CardDescription>Personalized recommendations based on your performance</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="p-4 rounded-lg border bg-destructive/5 border-destructive/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingDown className="h-5 w-5 text-destructive" />
+                  <span className="font-medium">Priority Focus</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Mathematics needs immediate attention. Start with Khan Academy's algebra basics.
+                </p>
+              </div>
+              <div className="p-4 rounded-lg border bg-warning/5 border-warning/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-5 w-5 text-warning" />
+                  <span className="font-medium">Study Time</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Allocate at least 2 hours daily for weak subjects. Best time: early morning.
+                </p>
+              </div>
+              <div className="p-4 rounded-lg border bg-success/5 border-success/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="h-5 w-5 text-success" />
+                  <span className="font-medium">Strong Areas</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  English and Computer Science are excellent. Use these strengths to build confidence.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

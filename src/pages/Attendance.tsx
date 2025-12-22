@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +33,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Clock, Copy, Download, QrCode, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Clock, Copy, Download, QrCode, CheckCircle, XCircle, Users, Calendar, TrendingUp, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Attendance() {
@@ -182,6 +183,14 @@ export default function Attendance() {
     closed: 'bg-muted text-muted-foreground border-muted',
   };
 
+  // Calculate stats
+  const activeSessions = sessions.filter(s => s.status === 'active').length;
+  const todaySessions = sessions.filter(s => s.date === new Date().toISOString().split('T')[0]).length;
+  const totalPresent = records.filter(r => r.status === 'present').length;
+  const avgAttendanceRate = sessions.length > 0 
+    ? Math.round((totalPresent / (sessions.length * (students.length / classes.length))) * 100) 
+    : 0;
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -259,63 +268,175 @@ export default function Attendance() {
           </Dialog>
         </div>
 
-        {/* Active Sessions */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sessions
-            .filter((s) => s.status === 'active')
-            .map((session) => (
-              <Card key={session.id} className="border-success/30 bg-success/5">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">
-                      {session.className} {session.division && `- ${session.division}`}
-                    </CardTitle>
-                    <Badge variant="outline" className={statusColors.active}>
-                      Active
-                    </Badge>
-                  </div>
-                  <CardDescription>{session.subject}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-center">
-                    <div className="text-center">
-                      <p className="text-4xl font-mono font-bold tracking-wider text-primary">
-                        {session.code}
-                      </p>
-                      <div className="flex items-center justify-center gap-2 mt-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span>{getTimeRemaining(session.expiresAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => copyCode(session.code)}>
-                      <Copy className="h-4 w-4 mr-1" />
-                      Copy
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => closeSession(session.id)}>
-                      <XCircle className="h-4 w-4 mr-1" />
-                      Close
-                    </Button>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => exportSessionToExcel(session)}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export Attendance
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+        {/* Stats Cards */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-success/30 bg-success/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Active Sessions</p>
+                  <p className="text-3xl font-bold text-success">{activeSessions}</p>
+                </div>
+                <CheckCircle className="h-10 w-10 text-success/50" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Today's Sessions</p>
+                  <p className="text-3xl font-bold">{todaySessions}</p>
+                </div>
+                <Calendar className="h-10 w-10 text-primary/50" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Present</p>
+                  <p className="text-3xl font-bold">{totalPresent}</p>
+                </div>
+                <Users className="h-10 w-10 text-primary/50" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Sessions</p>
+                  <p className="text-3xl font-bold">{sessions.length}</p>
+                </div>
+                <TrendingUp className="h-10 w-10 text-primary/50" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Active Sessions */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Active Sessions</h2>
+          {sessions.filter((s) => s.status === 'active').length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No active sessions</h3>
+                <p className="text-muted-foreground mb-4">
+                  Create a new session to start taking attendance
+                </p>
+                <Button onClick={() => setIsCreateOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Session
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {sessions
+                .filter((s) => s.status === 'active')
+                .map((session) => {
+                  const sessionRecords = getSessionRecords(session.id);
+                  const classStudentCount = students.filter(s => s.classId === session.classId).length;
+                  const presentCount = sessionRecords.filter(r => r.status === 'present').length;
+                  const attendancePercent = classStudentCount > 0 ? Math.round((presentCount / classStudentCount) * 100) : 0;
+                  
+                  return (
+                    <Card key={session.id} className="border-success/30 bg-success/5">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">
+                            {session.className} {session.division && `- ${session.division}`}
+                          </CardTitle>
+                          <Badge variant="outline" className={statusColors.active}>
+                            Active
+                          </Badge>
+                        </div>
+                        <CardDescription>{session.subject}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex items-center justify-center">
+                          <div className="text-center">
+                            <p className="text-4xl font-mono font-bold tracking-wider text-primary">
+                              {session.code}
+                            </p>
+                            <div className="flex items-center justify-center gap-2 mt-2 text-sm text-muted-foreground">
+                              <Clock className="h-4 w-4" />
+                              <span>{getTimeRemaining(session.expiresAt)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Attendance Progress */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Present</span>
+                            <span className="font-medium">{presentCount}/{classStudentCount}</span>
+                          </div>
+                          <Progress value={attendancePercent} className="h-2" />
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" className="flex-1" onClick={() => copyCode(session.code)}>
+                            <Copy className="h-4 w-4 mr-1" />
+                            Copy
+                          </Button>
+                          <Button variant="outline" size="sm" className="flex-1" onClick={() => closeSession(session.id)}>
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Close
+                          </Button>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => exportSessionToExcel(session)}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Export Attendance
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+
+        {/* Session Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Session Summary</CardTitle>
+            <CardDescription>Overview of attendance sessions by status</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                <CheckCircle className="h-8 w-8 text-success mb-2" />
+                <p className="text-2xl font-bold">{sessions.filter(s => s.status === 'active').length}</p>
+                <p className="text-sm text-muted-foreground">Active Sessions</p>
+              </div>
+              <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
+                <Clock className="h-8 w-8 text-warning mb-2" />
+                <p className="text-2xl font-bold">{sessions.filter(s => s.status === 'expired').length}</p>
+                <p className="text-sm text-muted-foreground">Expired Sessions</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted">
+                <XCircle className="h-8 w-8 text-muted-foreground mb-2" />
+                <p className="text-2xl font-bold">{sessions.filter(s => s.status === 'closed').length}</p>
+                <p className="text-sm text-muted-foreground">Closed Sessions</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* All Sessions Table */}
         <Card>
           <CardHeader>
             <CardTitle>Session History</CardTitle>
+            <CardDescription>All attendance sessions with details</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
@@ -325,35 +446,45 @@ export default function Attendance() {
                   <TableHead>Class</TableHead>
                   <TableHead className="hidden sm:table-cell">Subject</TableHead>
                   <TableHead>Code</TableHead>
+                  <TableHead className="hidden md:table-cell">Attendance</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sessions.map((session) => (
-                  <TableRow key={session.id}>
-                    <TableCell>{session.date}</TableCell>
-                    <TableCell>
-                      {session.className} {session.division && `- ${session.division}`}
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">{session.subject}</TableCell>
-                    <TableCell className="font-mono">{session.code}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={statusColors[session.status]}>
-                        {session.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => exportSessionToExcel(session)}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {sessions.map((session) => {
+                  const sessionRecords = getSessionRecords(session.id);
+                  const classStudentCount = students.filter(s => s.classId === session.classId).length;
+                  const presentCount = sessionRecords.filter(r => r.status === 'present').length;
+                  
+                  return (
+                    <TableRow key={session.id}>
+                      <TableCell>{session.date}</TableCell>
+                      <TableCell>
+                        {session.className} {session.division && `- ${session.division}`}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">{session.subject}</TableCell>
+                      <TableCell className="font-mono">{session.code}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {presentCount}/{classStudentCount}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={statusColors[session.status]}>
+                          {session.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => exportSessionToExcel(session)}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>

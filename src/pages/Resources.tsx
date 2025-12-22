@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -11,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FileText, Download, Eye, Search, BookOpen, Calendar, User } from 'lucide-react';
+import { FileText, Download, Eye, Search, BookOpen, Calendar, User, Star, Clock, TrendingUp, FolderOpen } from 'lucide-react';
 import type { StudyNote } from '@/types';
 import { format } from 'date-fns';
 
@@ -82,6 +84,19 @@ const mockNotes: StudyNote[] = [
     classId: 'class1',
     className: 'Class 12-A',
   },
+  {
+    id: '6',
+    title: 'Trigonometry Formulas',
+    subject: 'Mathematics',
+    description: 'All trigonometric identities, formulas, and solved examples.',
+    fileName: 'trigonometry.pdf',
+    fileUrl: '#',
+    uploadedBy: 'user1',
+    uploadedByName: 'Dr. Smith',
+    uploadedAt: '2024-01-02T10:00:00Z',
+    classId: 'class1',
+    className: 'Class 12-A',
+  },
 ];
 
 const subjects = [
@@ -99,6 +114,7 @@ const subjects = [
 export default function Resources() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('All Subjects');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const filteredNotes = mockNotes.filter((note) => {
     const matchesSearch =
@@ -113,6 +129,12 @@ export default function Resources() {
     acc[note.subject] = (acc[note.subject] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
+
+  // Recent downloads (mock)
+  const recentDownloads = mockNotes.slice(0, 3);
+
+  // Featured resources (mock)
+  const featuredResources = mockNotes.filter(n => n.subject === 'Mathematics' || n.subject === 'Physics').slice(0, 2);
 
   return (
     <DashboardLayout>
@@ -136,22 +158,112 @@ export default function Resources() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{mockNotes.length}</div>
+              <p className="text-sm text-muted-foreground">study materials available</p>
             </CardContent>
           </Card>
-          {Object.entries(subjectCounts)
-            .slice(0, 3)
-            .map(([subject, count]) => (
-              <Card key={subject}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">{subject}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">{count}</div>
-                  <p className="text-sm text-muted-foreground">notes available</p>
-                </CardContent>
-              </Card>
-            ))}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <FolderOpen className="h-5 w-5 text-primary" />
+                Subjects Covered
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{Object.keys(subjectCounts).length}</div>
+              <p className="text-sm text-muted-foreground">different subjects</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Clock className="h-5 w-5 text-primary" />
+                This Week
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">3</div>
+              <p className="text-sm text-muted-foreground">new uploads</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Download className="h-5 w-5 text-primary" />
+                Downloads
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">24</div>
+              <p className="text-sm text-muted-foreground">total downloads</p>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Featured Resources */}
+        {featuredResources.length > 0 && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-amber-500" />
+                Featured Resources
+              </CardTitle>
+              <CardDescription>Recommended study materials for you</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {featuredResources.map((note) => (
+                  <div key={note.id} className="flex items-start gap-4 p-4 rounded-lg bg-background border">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                      <FileText className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium">{note.title}</h4>
+                      <p className="text-sm text-muted-foreground">{note.subject} • {note.uploadedByName}</p>
+                      <div className="flex gap-2 mt-2">
+                        <Button size="sm" variant="outline" asChild>
+                          <a href={note.fileUrl} target="_blank" rel="noopener noreferrer">
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </a>
+                        </Button>
+                        <Button size="sm" asChild>
+                          <a href={note.fileUrl} download={note.fileName}>
+                            <Download className="h-3 w-3 mr-1" />
+                            Download
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Subject Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Resources by Subject
+            </CardTitle>
+            <CardDescription>Distribution of study materials across subjects</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {Object.entries(subjectCounts).map(([subject, count]) => (
+                <div key={subject} className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium">{subject}</span>
+                    <span className="text-muted-foreground">{count} resources</span>
+                  </div>
+                  <Progress value={(count / mockNotes.length) * 100} className="h-2" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Filters */}
         <Card>
@@ -217,6 +329,10 @@ export default function Resources() {
                       <Calendar className="h-4 w-4" />
                       <span>{format(new Date(note.uploadedAt), 'MMM d, yyyy')}</span>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4" />
+                      <span>{note.className}</span>
+                    </div>
                   </div>
                 </CardContent>
                 <div className="border-t p-4">
@@ -239,6 +355,37 @@ export default function Resources() {
             ))}
           </div>
         )}
+
+        {/* Recent Downloads */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Recently Viewed
+            </CardTitle>
+            <CardDescription>Your recently accessed resources</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {recentDownloads.map((note) => (
+                <div key={note.id} className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium text-sm">{note.title}</p>
+                      <p className="text-xs text-muted-foreground">{note.subject} • {note.uploadedByName}</p>
+                    </div>
+                  </div>
+                  <Button size="sm" variant="ghost" asChild>
+                    <a href={note.fileUrl} download={note.fileName}>
+                      <Download className="h-4 w-4" />
+                    </a>
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
