@@ -1,0 +1,7 @@
+{
+  "name": "LensLearn - AI Visual Educator",
+  "description": "Snap a photo of anything to learn the science, engineering, and physics behind how it works.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
